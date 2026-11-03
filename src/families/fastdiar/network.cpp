@@ -93,6 +93,8 @@ ggml_tensor * Network::stage(Graph & g, int i, const std::vector<ggml_tensor *> 
     const std::string prefix = "fastdiar.stage." + std::to_string(i) + ".";
     const int c = m_.size(prefix + "channels"), f = m_.size(prefix + "mels");
     const int64_t frames = maps.front()->ne[1];
+    if (frames <= 0 || frames % m_.size(prefix + "time_stride"))
+        throw std::invalid_argument("FASTDIAR stage frame count is not divisible by its stride");
     for (auto * map : maps)
         if (map->ne[0] != c * f || map->ne[1] != frames)
             throw std::invalid_argument("inconsistent FASTDIAR shared map shapes");
