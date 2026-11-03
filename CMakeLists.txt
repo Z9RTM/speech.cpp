@@ -536,3 +536,7 @@ target_link_libraries(drama3-prompt-check PRIVATE drama3)
 
 add_executable(fft-check checks/common/fft-check.cpp)
 target_link_libraries(fft-check PRIVATE speechcommon)
+
+# FASTDIAR's CPU clustering stage against the pinned official frame labels.
+add_executable(fastdiar-clustering-check checks/fastdiar/fastdiar-clustering-check.cpp src/families/fastdiar/clustering.cpp)
+target_include_directories(fastdiar-clustering-check PRIVATE checks src/families)
