@@ -603,7 +603,7 @@ add_library(fastdiar STATIC
     src/families/fastdiar/vad.cpp
 )
 target_include_directories(fastdiar PUBLIC src/families)
-target_link_libraries(fastdiar PUBLIC speechcommon)
+target_link_libraries(fastdiar PUBLIC speechcommon silerovad)
 add_executable(fastdiar-encoder-check checks/fastdiar/fastdiar-encoder-check.cpp)
 target_include_directories(fastdiar-encoder-check PRIVATE checks)
 target_link_libraries(fastdiar-encoder-check PRIVATE fastdiar)

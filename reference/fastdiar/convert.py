@@ -1,20 +1,22 @@
-"""Convert a pinned FASTDIAR streaming encoder to layout 1 F32 GGUF.
+"""Convert a pinned FASTDIAR streaming encoder to layout 2 F32 GGUF.
 
-Usage: uv run convert.py small|large --source OFFICIAL --checkpoint MODEL.pt --out MODEL.gguf
+Usage: uv run convert.py small|large --source OFFICIAL --checkpoint MODEL.pt --silero SILERO.gguf --out MODEL.gguf
 Grouped downsampling weights are expanded with exact zeros; depthwise residual kernels stay compact.
 BatchNorm training counters are not read in evaluation and are the only omitted state tensors.
+The keys and tensors of Silero VAD's GGUF, which the official diarizer runs, are carried unchanged: their names do not collide.
 """
 import argparse
 from pathlib import Path
 import numpy as np
 import torch
-from gguf import GGUFWriter
+from gguf import GGUFReader, GGUFValueType, GGUFWriter
 from pins import COMMIT, MODELS, load
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument("model", choices=MODELS)
 p.add_argument("--source", type=Path, required=True)
 p.add_argument("--checkpoint", type=Path, required=True)
+p.add_argument("--silero", type=Path, required=True)
 p.add_argument("--out", type=Path, required=True)
 a = p.parse_args()
 m = load(a.source, a.checkpoint, a.model)
@@ -30,7 +32,7 @@ for key, value in {
     "speech.requires": "0.10.2", "speech.task": "diarization",
 }.items(): w.add_string(key, value)
 w.add_uint32("general.file_type", 0)
-w.add_uint32("speech.layout", 1)
+w.add_uint32("speech.layout", 2)
 w.add_uint32("speech.sample_rate", 16000)
 for key,value in {"mels":s._stft_melbanks.shape[0],
                   "channels":m.backbone.stem[0].out_channels,"stage_count":len(m.backbone.stages),
@@ -72,5 +74,11 @@ for name, tensor in m.state_dict().items():
     elif name.startswith('spec.'):
         data=tensor.numpy().reshape(2) if name.endswith('flipped_filter') else data.squeeze(1) if 'kernel_pt' in name else data.squeeze(-1)
     w.add_tensor(name,np.ascontiguousarray(data,dtype=np.float32))
+silero = GGUFReader(a.silero)
+for key, field in silero.fields.items():
+    if key.startswith("silero-vad."):
+        w.add_key_value(key, field.contents(), field.types[0], sub_type=field.types[-1] if field.types[0] == GGUFValueType.ARRAY else None)
+for tensor in silero.tensors:
+    w.add_tensor(tensor.name, np.array(tensor.data, dtype=np.float32))
 w.write_header_to_file();w.write_kv_data_to_file();w.write_tensors_to_file();w.close()
 print(a.out)
