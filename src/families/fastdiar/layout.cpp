@@ -1,5 +1,6 @@
 #include "layout.h"
 #include "error.h"
+#include "silero-vad/layout.h"
 #include <cmath>
 #include <numeric>
 
@@ -91,8 +92,16 @@ std::vector<TensorSpec> tensors(const ModelFile & m) {
                {".2.real_kernel_pt", {window, bins}, f32},
                {".2.image_kernel_pt", {window, bins}, f32},
                {".2.melbanks_pt", {bins, mel}, f32}});
+    for (TensorSpec & spec : silero_vad::network_tensors(m))
+        t.push_back(std::move(spec));
     return t;
 }
 } // namespace
-const Layout layout = {"fastdiar", 1, "convert it with reference/fastdiar/convert.py", tensors};
+const Layout layout = {"fastdiar", 2, "convert it with reference/fastdiar/convert.py", tensors};
+bool is_vad_tensor(const std::string & name) {
+    for (const char * prefix : {"stft.", "encoder.", "lstm.", "decoder."})
+        if (name.rfind(prefix, 0) == 0)
+            return true;
+    return false;
+}
 } // namespace fastdiar

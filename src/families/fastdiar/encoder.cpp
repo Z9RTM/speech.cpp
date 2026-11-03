@@ -5,7 +5,7 @@
 #include <stdexcept>
 namespace fastdiar {
 Encoder::Encoder(const std::string & path, ggml_backend_t backend, int step)
-    : model_(path, backend, layout), frontend_(model_), network_(model_), backend_(backend),
+    : model_(path, backend, layout, [](const std::string & name) { return !is_vad_tensor(name); }), frontend_(model_), network_(model_), backend_(backend),
       allocator_(ggml_gallocr_new(ggml_backend_get_default_buffer_type(backend)), ggml_gallocr_free) {
     if (step < 1 || step > 4096)
         throw std::invalid_argument("encoder step must be between 1 and 4096 frames");
