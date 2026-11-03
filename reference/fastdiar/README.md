@@ -1,12 +1,13 @@
-# FASTDIAR native inference
+# FASTDIAR
 
-The fork implements streaming ReDimNet2 encoder inference from 16 kHz mono audio to normalized 192-dimensional
-speaker embeddings, with a float32 GGUF converter and stage checks against pinned official small and large models.
-The frontend runs on the CPU; the backbone and projection run on the selected ggml CPU or Metal backend.
+`speech diarize` and `speech asr --diarize` run FASTDIAR from one float32 GGUF: the streaming ReDimNet2 encoder of
+[microsoft/fastdiar](https://github.com/microsoft/fastdiar) at `f48bff53b9a6a0cce4539e94b6def95f609eaea4`, its VAD's
+hysteresis and streaming clustering, and Silero VAD's weights, which the file carries so that one model is all a caller
+names. The frontend, the VAD and the clustering run on the CPU; the backbone and projection on the selected backend.
 
-The separate streaming clustering stage is also implemented. VAD integration, the complete diarization engine,
-dynamic-speaker C API and catalog registration are not implemented. Neither `speech diarize` nor
-`speech asr --diarize` can load FASTDIAR yet. No converted weights are included or published.
+FASTDIAR has no most speakers, which `speech info` shows as any number and `speech_model_info_speakers()` as 0. It gives
+one speaker per frame, so overlapped speech counts against it. A live stream gives its turns in pieces and never reports
+a speaker under way through `speech_diarization_speaking()`; whole-file diarization gives whole turns.
 
 ## Convert and check an encoder
 
@@ -14,13 +15,15 @@ The reference is [microsoft/fastdiar](https://github.com/microsoft/fastdiar) at
 `f48bff53b9a6a0cce4539e94b6def95f609eaea4`. Its MIT license and third-party notice are retained here.
 Download a checkpoint from that repository's `v0.1.0` release. The scripts verify its full SHA-256 before loading it.
 Python and its locked environment are used for conversion and reference generation only.
+The official environment's silero-vad 6.2.1 and speech.cpp's 6.2.3 ship the same `silero_vad.jit` (SHA-256 `e1122837...`), so
+speech.cpp's Silero GGUF is carried unchanged.
 
 ```sh
 git clone https://github.com/microsoft/fastdiar /tmp/fastdiar
 git -C /tmp/fastdiar checkout f48bff53b9a6a0cce4539e94b6def95f609eaea4
 uv run --project reference/fastdiar reference/fastdiar/convert.py small \
   --source /tmp/fastdiar --checkpoint /path/to/fastdiar-small-90be5da5.pt \
-  --out models/FASTDIAR-small-2.4M-F32.gguf
+  --silero /path/to/silero-vad-309K-v6.2-F32.gguf --out models/FASTDIAR-small-2.4M-F32.gguf
 uv run --project reference/fastdiar reference/fastdiar/encoder-dump.py small \
   --source /tmp/fastdiar --checkpoint /path/to/fastdiar-small-90be5da5.pt \
   --out reference/fastdiar/out/encoder-small --audio /path/to/public-16khz-mono.wav
@@ -67,3 +70,16 @@ embeddings preserve the official cluster IDs and emission steps. This supplies a
 claim that native VAD inference is integrated.
 
 Whole-model performance and DER measurements belong in speech-bench, not these correctness checks.
+
+## Check the VAD and the whole path
+
+```sh
+uv run --project reference/fastdiar reference/fastdiar/vad-dump.py \
+  --source /tmp/fastdiar --audio /path/to/public-16khz-mono.wav --out reference/fastdiar/out/vad
+cmake --build build --target fastdiar-vad-check speech-cli -j4
+build/fastdiar-vad-check reference/fastdiar/out/vad
+build/speech diarize models/FASTDIAR-large-10.4M-F32.gguf --format rttm /path/to/public-16khz-mono.wav > ours.rttm
+python3 checks/fastdiar/compare-rttm.py official.rttm ours.rttm
+```
+
+`official.rttm` comes from the official `StreamingDiarizer` with `shift_sec=0.32` on the same audio.
