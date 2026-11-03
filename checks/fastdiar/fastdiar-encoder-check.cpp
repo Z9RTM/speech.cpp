@@ -83,6 +83,15 @@ int main(int argc, char ** argv) {
         std::vector<size_t> chunks{5120};
         if (audio.size() < 100000)
             chunks.insert(chunks.end(), {137, 1, std::max(size_t(1), audio.size())});
+        if (audio.size() < 100000) {
+            for (int step : {1, 25}) {
+                fastdiar::Encoder alternate(argv[1], backend.get(), step);
+                std::vector<float> embeddings;
+                alternate.push(audio.data(), audio.size(), embeddings);
+                alternate.end(embeddings);
+                require_close("network step=" + std::to_string(step), embeddings, expected, bound);
+            }
+        }
         for (size_t chunk : chunks) {
             encoder.reset();
             std::vector<float> embeddings;
