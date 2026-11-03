@@ -591,6 +591,8 @@ target_link_libraries(fft-check PRIVATE speechcommon)
 # FASTDIAR's CPU clustering stage against the pinned official frame labels.
 add_executable(fastdiar-clustering-check checks/fastdiar/fastdiar-clustering-check.cpp src/families/fastdiar/clustering.cpp)
 target_include_directories(fastdiar-clustering-check PRIVATE checks src/families)
+add_executable(fastdiar-vad-check checks/fastdiar/fastdiar-vad-check.cpp src/families/fastdiar/vad.cpp)
+target_include_directories(fastdiar-vad-check PRIVATE checks src/families)
 
 add_library(fastdiar STATIC
     src/families/fastdiar/layout.cpp
@@ -598,6 +600,7 @@ add_library(fastdiar STATIC
     src/families/fastdiar/network.cpp
     src/families/fastdiar/encoder.cpp
     src/families/fastdiar/clustering.cpp
+    src/families/fastdiar/vad.cpp
 )
 target_include_directories(fastdiar PUBLIC src/families)
 target_link_libraries(fastdiar PUBLIC speechcommon)
