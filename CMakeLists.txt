@@ -234,17 +234,17 @@ target_link_libraries(haru PUBLIC speechcommon)
 # the library and the shared one as its import library, hence speech-static.
 set(SPEECH_SOURCES src/api/speech.cpp src/api/info.cpp src/api/request.cpp src/api/detection.cpp src/api/diarization.cpp src/api/enhancement.cpp src/api/dialogue.cpp src/api/voice.cpp
     src/engines/qwen3-tts-engine.cpp src/engines/irodori-tts-engine.cpp src/engines/drama3-engine.cpp src/engines/fastconformer-engine.cpp
-    src/engines/qwen3-asr-engine.cpp src/engines/nemotron-transcribe-engine.cpp src/engines/silero-vad-engine.cpp src/engines/sortformer-engine.cpp
+    src/engines/qwen3-asr-engine.cpp src/engines/nemotron-transcribe-engine.cpp src/engines/silero-vad-engine.cpp src/engines/sortformer-engine.cpp src/engines/fastdiar-engine.cpp
     src/engines/semamba-engine.cpp src/engines/haru-engine.cpp)
 
 add_library(speech-static STATIC ${SPEECH_SOURCES})
 target_include_directories(speech-static PUBLIC include PRIVATE src/engines)
-target_link_libraries(speech-static PUBLIC qwen3tts irodoritts drama3 haru fastconformer qwen3asr nemotrontranscribe silerovad sortformer semamba)
+target_link_libraries(speech-static PUBLIC qwen3tts irodoritts drama3 haru fastconformer qwen3asr nemotrontranscribe silerovad sortformer fastdiar semamba)
 target_compile_definitions(speech-static PRIVATE SPEECH_VERSION="${PROJECT_VERSION}")
 
 add_library(speech SHARED ${SPEECH_SOURCES})
 target_include_directories(speech PUBLIC include PRIVATE src/engines)
-target_link_libraries(speech PRIVATE qwen3tts irodoritts drama3 haru fastconformer qwen3asr nemotrontranscribe silerovad sortformer semamba)
+target_link_libraries(speech PRIVATE qwen3tts irodoritts drama3 haru fastconformer qwen3asr nemotrontranscribe silerovad sortformer fastdiar semamba)
 target_compile_definitions(speech PRIVATE SPEECH_BUILD_SHARED SPEECH_VERSION="${PROJECT_VERSION}" INTERFACE SPEECH_SHARED)
 set_target_properties(speech PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
 # The shared library's SOVERSION is the C API's major version, which speech.h defines and nothing else repeats.
@@ -601,6 +601,7 @@ add_library(fastdiar STATIC
     src/families/fastdiar/encoder.cpp
     src/families/fastdiar/clustering.cpp
     src/families/fastdiar/vad.cpp
+    src/families/fastdiar/labels.cpp
 )
 target_include_directories(fastdiar PUBLIC src/families)
 target_link_libraries(fastdiar PUBLIC speechcommon silerovad)
