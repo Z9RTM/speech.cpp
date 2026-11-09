@@ -40,7 +40,7 @@ std::vector<std::pair<const char *, std::vector<Command>>> groups() {
         {"Speak and transcribe", {tts_command(), asr_command(), vad_command(), diarize_command(), enhance_command(), talk_command()}},
         {"Serve", {serve_command(), worker_command()}},
         {"Models", {models_command(), pull_command(), rm_command(), info_command(), voice_command(), quantize_command()}},
-        {"This installation", {devices_command(), update_command()}},
+        {"This installation", {devices_command(), mics_command(), update_command()}},
     };
 }
 

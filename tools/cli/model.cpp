@@ -20,6 +20,7 @@
 #include "fetch.h"
 #include "json-reader.h"
 #include "json.h"
+#include "microphone.h"
 #include "terminal.h"
 
 // The subcommands about models and devices rather than requests: speech voice makes a voice file, speech info prints
@@ -449,6 +450,35 @@ Command info_command() {
     c.min_args = 1;
     c.max_args = 1;
     c.run = run_info;
+    c.release_notice = ReleaseNotice::AtEnd;
+    return c;
+}
+
+int run_mics(const CommandLine & line, FILE * out) {
+    const bool json = line.has("--json");
+    std::string text = json ? "{\"microphones\":[" : "";
+    bool first = true;
+    for (const MicrophoneInfo & mic : list_microphones()) {
+        if (json) text += std::string(first ? "" : ",") + "{\"name\":" + json_string(mic.name) + ",\"default\":" + (mic.is_default ? "true" : "false") + "}";
+        else text += mic.name + (mic.is_default ? " (default)\n" : "\n");
+        first = false;
+    }
+    if (json) text += "]}\n";
+    std::fputs(text.c_str(), out);
+    std::fflush(out);
+    return 0;
+}
+
+Command mics_command() {
+    Command c;
+    c.name = "mics";
+    c.usage = "mics [--json]";
+    c.summary = "list the microphones speech asr --live --mic can choose";
+    c.description = "Lists the capture devices the system offers, by the names --mic takes.";
+    c.flags = {
+        {"--json", "", false, "print one JSON object, {\"microphones\": [{\"name\", \"default\"}]}"},
+    };
+    c.run = run_mics;
     c.release_notice = ReleaseNotice::AtEnd;
     return c;
 }
