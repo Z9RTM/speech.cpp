@@ -233,7 +233,7 @@ int transcribe_stream(const CommandLine & line, FILE * out, speech_model * recog
     check_recognition(recognizer, options);
     const bool live = line.has("--live");
     std::unique_ptr<Microphone> microphone;
-    if (live) microphone = std::make_unique<Microphone>();
+    if (live) microphone = std::make_unique<Microphone>(line.value("--mic").value_or(""));
     const int rate = live ? microphone->rate() : line.integer("--rate").value_or(16000);
     const bool verbose = line.has("-v");
 

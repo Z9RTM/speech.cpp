@@ -16,6 +16,7 @@ Command talk_command();
 Command voice_command();
 Command info_command();
 Command devices_command();
+Command mics_command();
 Command models_command();
 Command pull_command();
 Command rm_command();

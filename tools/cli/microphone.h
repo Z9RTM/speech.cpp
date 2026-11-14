@@ -7,13 +7,25 @@
 #include <string>
 #include <vector>
 
-// The system's default microphone, through miniaudio, for speech asr --live and speech talk --live.
+// The system's microphones, through miniaudio, for speech asr --live, speech talk --live and speech mics.
 
-/** The default capture device, started, giving mono 32-bit float samples at the device's own rate. */
+/** A capture device the system offers, by the name Microphone takes. */
+struct MicrophoneInfo {
+    std::string name;
+    bool is_default = false;
+};
+
+/** The capture devices the system offers; a failure to ask throws a Failure of io. */
+std::vector<MicrophoneInfo> list_microphones();
+
+/** A capture device, started, giving mono 32-bit float samples at the device's own rate. */
 class Microphone {
 public:
-    /** Opens and starts the default capture device; one that does not open or start throws a Failure of io. */
-    Microphone();
+    /**
+     * Opens and starts the capture device of this exact name, the first of several that share it, or the default one
+     * when empty; no such device, or one that does not open or start, throws a Failure of io.
+     */
+    explicit Microphone(const std::string & device = "");
     /** Stops the device. */
     ~Microphone();
     Microphone(const Microphone &) = delete;

@@ -193,6 +193,8 @@ int run_asr(const CommandLine & line, FILE * out) {
         if (!names_a_model(line.args[0])) throw UsageError(no_model_message(line.command().usage, *line.command().model));
         throw UsageError("give the WAVE files to transcribe, - for 16-bit PCM on stdin, or --live for the microphone");
     }
+    if (line.has("--mic") && !live) throw UsageError("--mic chooses the microphone of --live; give --live too");
+    if (line.value("--mic") && line.value("--mic")->empty()) throw UsageError("--mic takes a name that speech mics lists");
     if (line.has("--rate") && !piped) throw UsageError("--rate is the rate of the PCM that - reads from stdin");
     if (line.integer("--rate").value_or(1) <= 0) throw UsageError("--rate takes the PCM's rate in Hz");
     if ((live || piped) && !line.has("--vad")) {
@@ -379,6 +381,7 @@ Command asr_command() {
         {"--format", "text|json", false, "text (the default) or one JSON object per file, or per event, and line"},
         {"--vad", "MODEL", false, "transcribe by the regions where this detection model finds speech"},
         {"--live", "", false, "transcribe the default microphone until Ctrl-C, with --vad"},
+        {"--mic", "NAME", false, "with --live, the microphone of this name that speech mics lists, not the default"},
         {"--diarize", "MODEL", false, "give each region the speakers this diarization model finds, with --vad"},
         {"--enhance", "MODEL", false, "remove noise with this enhancement model before the recognition"},
         {"--rate", "HZ", false, "the rate of the PCM that - reads from stdin, 16000 unless given"},
